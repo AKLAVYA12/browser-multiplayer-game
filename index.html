@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smooth Movable Human</title>
+</head>
+<body>
+<canvas id="mycanvas" width="800" height="800" style="border:1px black"></canvas>
+<script>
+    const canvas = document.getElementById("mycanvas");
+    const ctx = canvas.getContext('2d');
+
+    let x = canvas.width / 2;
+    let y = canvas.height / 2 + 100;
+    let a1 = canvas.width / 2 - 50;
+    let b1 = canvas.height / 2 - 25;
+    let speed = 4;
+
+    let keys = {};
+    let bombs = [];
+
+    document.addEventListener("keydown", e => keys[e.key] = true);
+    document.addEventListener("keyup", e => keys[e.key] = false);
+
+    canvas.addEventListener("click", (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        const dx = mouseX - x;
+        const dy = mouseY - y;
+        const length = Math.hypot(dx, dy);
+        const speed = 6;
+
+        bombs.push({
+            a: x,
+            b: y,
+            vx: (dx / length) * speed,
+            vy: (dy / length) * speed,
+            radius: 5
+        });
+    });
+
+    function draw(){
+        ctx.fillStyle = 'black';
+        ctx.fillRect(a1,b1,100,50);
+    }
+
+    function drawhuman(x,y){
+        ctx.fillStyle = 'red';
+
+        //head
+        ctx.beginPath();
+        ctx.arc(x,y,15,0,Math.PI * 2);
+        ctx.fill();
+
+        //body
+        ctx.fillRect(x-12,y+15,24,40);
+
+        //arms
+        ctx.fillRect(x-30,y+15,24,40);
+        ctx.fillRect(x+15,y+15,15,35);
+
+        //legs
+        ctx.fillRect(x-12,y+55,10,40);
+        ctx.fillRect(x+2,y+55,10,40);
+    }
+
+    function drawBombs(){
+        ctx.fillStyle = "black";
+        bombs.forEach(b =>{
+            ctx.beginPath();
+            ctx.arc(b.a, b.b, b.radius, 0, Math.PI * 2);
+            ctx.fill();
+        });
+    }
+
+    function update(){
+        let nextX = x;
+        let nextY = y;
+
+        if(keys["w"]) nextY -= speed;
+        if(keys["s"]) nextY += speed;
+        if(keys["a"]) nextX -= speed;
+        if(keys["d"]) nextX += speed;
+
+        const humanRadius = 15;
+        const closestX = Math.max(a1, Math.min(nextX, a1 + 100));
+        const closestY = Math.max(b1, Math.min(nextY, b1 + 50));
+        const distX = nextX - closestX;
+        const distY = nextY - closestY;
+        if(distX * distX + distY * distY > humanRadius * humanRadius){
+            x = nextX;
+            y = nextY;
+        }
+
+        bombs.forEach(b =>{
+            b.a += b.vx;
+            b.b += b.vy;
+        });
+        bombs = bombs.filter(b => b.a >= 0 && b.a <= canvas.width && b.b >= 0 && b.b <= canvas.height);
+    }
+
+    function gameloop(){
+        ctx.clearRect(0,0, canvas.width, canvas.height);
+        draw();         // draw rectangle
+        update();
+        drawhuman(x,y);
+        drawBombs();
+        requestAnimationFrame(gameloop);
+    }
+
+    gameloop();
+
+</script>
+</body>
+</html>
